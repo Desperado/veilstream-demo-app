@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeilStream — User Management</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            background: #1a1a2e;
+            color: #fff;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+
+        header .logo {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        header .logo span { color: #6c63ff; }
+
+        nav a {
+            color: #a0a0b8;
+            text-decoration: none;
+            margin-left: 1.5rem;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        nav a:hover, nav a.active { color: #fff; }
+
+        /* Main content */
+        main {
+            max-width: 960px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+        }
+
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .btn {
+            padding: 0.5rem 1.25rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background: #6c63ff;
+            color: #fff;
+        }
+
+        .btn-primary:hover { background: #5a52d5; }
+
+        .btn-secondary {
+            background: #e2e2ea;
+            color: #1a1a2e;
+        }
+
+        .btn-secondary:hover { background: #d0d0dc; }
+
+        /* Table */
+        .table-wrapper {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead { background: #f8f8fc; }
+
+        th, td {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #6b6b80;
+        }
+
+        td { font-size: 0.9rem; }
+
+        tr:last-child td { border-bottom: none; }
+
+        tbody tr:hover { background: #fafaff; }
+
+        .role-badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .role-admin  { background: #ede9ff; color: #6c63ff; }
+        .role-editor { background: #e6f7f0; color: #1a9960; }
+        .role-viewer { background: #f0f0f5; color: #6b6b80; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: #fff;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        }
+
+        .modal h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #6b6b80;
+            margin-bottom: 0.3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.6rem 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #6c63ff;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .error-msg {
+            color: #d9534f;
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        /* About page */
+        .about-content {
+            background: #fff;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            line-height: 1.7;
+            display: none;
+        }
+
+        .about-content h2 { margin-bottom: 0.75rem; }
+        .about-content p { color: #555; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Veil<span>Stream</span></div>
+        <nav>
+            <a href="#users" class="active" data-page="users">Users</a>
+            <a href="#about" data-page="about">About</a>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Users page -->
+        <div id="page-users">
+            <div class="page-header">
+                <h1>Users</h1>
+                <button class="btn btn-primary" id="btn-add-user">+ Add User</button>
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Joined</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-tbody">
+                        <tr><td colspan="4" style="text-align:center;color:#999;padding:2rem;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- About page -->
+        <div id="page-about" class="about-content">
+            <h2>About VeilStream</h2>
+            <p>VeilStream is a lightweight user management dashboard built with Express and PostgreSQL. It demonstrates a typical full-stack web application with Docker-based deployment.</p>
+            <p>This project serves as a demo environment for testing CI/CD integrations, automated QA pipelines, and deployment workflows.</p>
+        </div>
+    </main>
+
+    <!-- Add User Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <h2>Add New User</h2>
+            <form id="add-user-form">
+                <div class="form-group">
+                    <label for="user-name">Name</label>
+                    <input type="text" id="user-name" name="name" placeholder="Jane Doe" required>
+                </div>
+                <div class="form-group">
+                    <label for="user-email">Email</label>
+                    <input type="email" id="user-email" name="email" placeholder="jane@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="user-role">Role</label>
+                    <select id="user-role" name="role">
+                        <option value="viewer">Viewer</option>
+                        <option value="editor">Editor</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="error-msg" id="form-error"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const tbody = document.getElementById('users-tbody');
+        const modal = document.getElementById('modal-overlay');
+        const form = document.getElementById('add-user-form');
+        const formError = document.getElementById('form-error');
+
+        // ---- Data ----
+        let users = [];
+
+        async function fetchUsers() {
+            try {
+                const res = await fetch('/api/users');
+                users = await res.json();
+                renderTable();
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#d9534f;padding:2rem;">Failed to load users</td></tr>';
+            }
+        }
+
+        function renderTable() {
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;padding:2rem;">No users found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td>${esc(u.name)}</td>
+                    <td>${esc(u.email)}</td>
+                    <td><span class="role-badge role-${u.role}">${u.role}</span></td>
+                    <td>${formatDate(u.created_at)}</td>
+                </tr>
+            `).join('');
+        }
+
+        function esc(str) {
+            const d = document.createElement('div');
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function formatDate(iso) {
+            return new Date(iso).toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric'
+            });
+        }
+
+        // ---- Modal ----
+        document.getElementById('btn-add-user').addEventListener('click', () => {
+            modal.classList.add('open');
+            document.getElementById('user-name').focus();
+        });
+
+        document.getElementById('btn-cancel').addEventListener('click', closeModal);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        function closeModal() {
+            modal.classList.remove('open');
+            form.reset();
+            formError.style.display = 'none';
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            formError.style.display = 'none';
+
+            const data = {
+                name: document.getElementById('user-name').value.trim(),
+                email: document.getElementById('user-email').value.trim(),
+                role: document.getElementById('user-role').value,
+            };
+
+            try {
+                const res = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'Something went wrong');
+                }
+
+                closeModal();
+                await fetchUsers();
+            } catch (err) {
+                formError.textContent = err.message;
+                formError.style.display = 'block';
+            }
+        });
+
+        // ---- Routing ----
+        function handleRoute() {
+            const hash = location.hash.replace('#', '') || 'users';
+            document.getElementById('page-users').style.display = hash === 'users' ? 'block' : 'none';
+            document.getElementById('page-about').style.display = hash === 'about' ? 'block' : 'none';
+
+            document.querySelectorAll('nav a').forEach(a => {
+                a.classList.toggle('active', a.dataset.page === hash);
+            });
+        }
+
+        window.addEventListener('hashchange', handleRoute);
+        handleRoute();
+
+        // ---- Init ----
+        fetchUsers();
+    </script>
+</body>
+</html>
