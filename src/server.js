@@ -7,13 +7,39 @@ const port = process.env.PORT || 3000;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgres://veilstream:veilstream@localhost:5432/veilstream',
+  connectionTimeoutMillis: 5000,
 });
+
+pool.on('error', (err) => {
+  console.error('Unexpected pool error:', err.message);
+});
+
+// Wait for database to be ready before serving requests
+let dbReady = false;
+async function waitForDb() {
+  for (let i = 0; i < 30; i++) {
+    try {
+      await pool.query('SELECT 1');
+      console.log('Database connected');
+      dbReady = true;
+      return;
+    } catch (err) {
+      console.log(`Waiting for database... (attempt ${i + 1}/30)`);
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  }
+  console.error('Could not connect to database after 30 attempts');
+  process.exit(1);
+}
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Get all users
 app.get('/api/users', async (req, res) => {
+  if (!dbReady) {
+    return res.status(503).json({ error: 'Database not ready' });
+  }
   try {
     const result = await pool.query('SELECT * FROM users ORDER BY id');
     res.json(result.rows);
@@ -46,6 +72,8 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`VeilStream app listening on http://localhost:${port}`);
+waitForDb().then(() => {
+  app.listen(port, () => {
+    console.log(`VeilStream app listening on http://localhost:${port}`);
+  });
 });
