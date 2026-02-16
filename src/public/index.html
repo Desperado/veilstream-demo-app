@@ -113,7 +113,20 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: #6b6b80;
+            cursor: pointer;
+            user-select: none;
+            transition: color 0.2s;
         }
+
+        th:hover { color: #1a1a2e; }
+
+        th .sort-indicator {
+            margin-left: 0.3rem;
+            font-size: 0.7rem;
+            color: #b0b0c0;
+        }
+
+        th.sorted .sort-indicator { color: #6c63ff; }
 
         td { font-size: 0.9rem; }
 
@@ -239,10 +252,10 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Joined</th>
+                            <th data-sort="name">Name <span class="sort-indicator"></span></th>
+                            <th data-sort="email">Email <span class="sort-indicator"></span></th>
+                            <th data-sort="role">Role <span class="sort-indicator"></span></th>
+                            <th data-sort="created_at">Joined <span class="sort-indicator"></span></th>
                         </tr>
                     </thead>
                     <tbody id="users-tbody">
@@ -296,8 +309,10 @@
         const form = document.getElementById('add-user-form');
         const formError = document.getElementById('form-error');
 
-        // ---- Data ----
+        // ---- Data & Sort State ----
         let users = [];
+        let sortColumn = null;
+        let sortDirection = 'asc';
 
         async function fetchUsers() {
             try {
@@ -336,6 +351,53 @@
                 year: 'numeric', month: 'short', day: 'numeric'
             });
         }
+
+        // ---- Sorting ----
+        function sortUsers(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+
+            users.sort((a, b) => {
+                let valA = a[column];
+                let valB = b[column];
+
+                if (column === 'created_at') {
+                    valA = new Date(valA).getTime();
+                    valB = new Date(valB).getTime();
+                } else {
+                    valA = (valA || '').toLowerCase();
+                    valB = (valB || '').toLowerCase();
+                }
+
+                if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            updateSortIndicators();
+            renderTable();
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                const indicator = th.querySelector('.sort-indicator');
+                if (th.dataset.sort === sortColumn) {
+                    th.classList.add('sorted');
+                    indicator.textContent = sortDirection === 'asc' ? '▲' : '▼';
+                } else {
+                    th.classList.remove('sorted');
+                    indicator.textContent = '';
+                }
+            });
+        }
+
+        document.querySelectorAll('th[data-sort]').forEach(th => {
+            th.addEventListener('click', () => sortUsers(th.dataset.sort));
+        });
 
         // ---- Modal ----
         document.getElementById('btn-add-user').addEventListener('click', () => {
