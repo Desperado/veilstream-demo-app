@@ -1,0 +1,61 @@
+name: QualityMax E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - smoke
+          - regression
+      base_url:
+        description: 'Base URL to test against (leave empty for default)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  test:
+    name: Run QualityMax Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run QualityMax Tests
+        uses: Quality-Max/qualitymax-github-action@v1
+        id: qamax
+        with:
+          api-key: ${{ secrets.QAMAX_API_KEY }}
+          project-name: 'veilstream-demo-app'
+          test-suite: ${{ inputs.suite || 'all' }}
+          base-url: ${{ inputs.base_url || '' }}
+          browser: 'chromium'
+          fail-on-test-failure: 'true'
+          post-pr-comment: 'true'
+
+      - name: Test Results Summary
+        if: always()
+        run: |
+          echo "## QualityMax Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Status | ${{ steps.qamax.outputs.status }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | ${{ steps.qamax.outputs.passed-tests }}/${{ steps.qamax.outputs.total-tests }} passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Duration | ${{ steps.qamax.outputs.duration-seconds }}s |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[View Full Report](${{ steps.qamax.outputs.report-url }})" >> $GITHUB_STEP_SUMMARY
