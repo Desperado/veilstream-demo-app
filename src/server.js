@@ -84,13 +84,23 @@ async function waitForDb() {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Get all users
+// Get all users (with optional search)
 app.get('/api/users', async (req, res) => {
   if (!dbReady) {
     return res.status(503).json({ error: 'Database not ready' });
   }
   try {
-    const result = await pool.query('SELECT * FROM users ORDER BY id');
+    const search = req.query.search;
+    let result;
+    if (search && search.trim()) {
+      const pattern = `%${search.trim()}%`;
+      result = await pool.query(
+        'SELECT * FROM users WHERE name ILIKE $1 OR email ILIKE $1 OR role ILIKE $1 ORDER BY id',
+        [pattern]
+      );
+    } else {
+      result = await pool.query('SELECT * FROM users ORDER BY id');
+    }
     res.json(result.rows);
   } catch (err) {
     console.error('Error fetching users:', err.message);
