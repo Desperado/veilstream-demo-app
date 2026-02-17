@@ -35,6 +35,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Debug API connectivity
+        run: |
+          echo "Testing connectivity to app.qamax.co..."
+          curl -sv -H "X-API-Key: ${{ secrets.QAMAX_API_KEY }}" \
+            -H "User-Agent: QualityMax-GitHub-Action/1.1" \
+            "https://app.qamax.co/api/github-action/validate" 2>&1 | head -50
+
       - name: Run QualityMax Tests
         uses: Quality-Max/qualitymax-github-action@v1
         id: qamax
