@@ -40,7 +40,7 @@ jobs:
         id: qamax
         with:
           api-key: ${{ secrets.QAMAX_API_KEY }}
-          project-name: 'veilstream-demo-app'
+          project-name: 'VeilStream'
           test-suite: ${{ inputs.suite || 'all' }}
           base-url: ${{ inputs.base_url || '' }}
           browser: 'chromium'
