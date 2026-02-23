@@ -1,0 +1,36 @@
+/* Dark mode toggle styles */
+.dark-mode-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #222;
+  color: #eee;
+  cursor: pointer;
+  font-size: 14px;
+  z-index: 1000;
+}
+
+body.dark {
+  background: #1a1a2e;
+  color: #e0e0e0;
+}
+
+body.dark table {
+  border-color: #333;
+}
+
+body.dark th {
+  background: #16213e;
+  color: #e0e0e0;
+}
+
+body.dark td {
+  border-color: #333;
+}
+
+body.dark tr:hover {
+  background: #1a1a3e;
+}
